@@ -11,15 +11,19 @@ Proxy cục bộ dùng phiên đăng nhập ChatGPT/Codex có sẵn trên máy, 
 - Model đã xác nhận (2026-10-03): `gpt-6.1-sol`, `gpt-6-astra`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-image-2`. Danh sách có thể đổi, chạy lại lệnh start để xem.
 - Đã test thành công: `/v1/chat/completions` (gpt-5.5), `/v1/responses` (gpt-5.5), `/v1/images/generations` (gpt-image-2).
 
+## Quy tắc quan trọng
+
+Khi người dùng nhờ tạo ảnh hoặc hỏi GPT: **Claude tự thực hiện toàn bộ** (kiểm tra server, khởi động server nếu chưa chạy, gọi API, lưu ảnh, xem lại ảnh). Không đưa lệnh cho người dùng tự chạy. Chỉ hỏi người dùng khi cần họ đăng nhập ChatGPT/Codex hoặc thiếu thông tin về nội dung ảnh.
+
 ## Bước 1: bảo đảm server đang chạy
 
-Kiểm tra: `Invoke-RestMethod http://127.0.0.1:10531/v1/models`. Nếu lỗi kết nối, khởi động:
+Kiểm tra: `curl http://127.0.0.1:10531/v1/models` (hoặc `Invoke-RestMethod` trên PowerShell). Nếu lỗi kết nối, tự khởi động:
 
 ```
 npx -y -p openai-oauth -p zod openai-oauth --detach
 ```
 
-(Phải thêm `-p zod`, nếu không `npx openai-oauth` báo thiếu package `zod`.)
+(Phải thêm `-p zod`, nếu không `npx openai-oauth` báo thiếu package `zod`.) Đợi vài giây rồi kiểm tra lại.
 Dừng: `npx openai-oauth stop`. Log: `npx openai-oauth logs --follow`.
 Nếu báo chưa đăng nhập, bảo người dùng tự đăng nhập ChatGPT/Codex; không được tự nhập mật khẩu.
 
@@ -32,11 +36,11 @@ $b=@{model="gpt-5.5";messages=@(@{role="user";content="..."})}|ConvertTo-Json -D
 ```
 Dùng `/v1/responses` với `input` nếu cần API Responses. Model suy luận tốn token ẩn (reasoning), nên đừng đặt giới hạn token quá thấp.
 
-Tạo ảnh: dùng script kèm theo:
+Tạo ảnh: dùng script `gen-image.mjs` nằm cùng thư mục với file SKILL.md này (chạy trên Windows/macOS/Linux, cần Node 18+; máy đã có Node vì dùng npx). Thư mục skill thường là `~/.claude/skills/gpt/` (Windows: `%USERPROFILE%\.claude\skills\gpt\`). Nếu không thấy, tìm đường dẫn thật của SKILL.md này; không dùng đường dẫn của máy khác.
 ```
-powershell -File "C:\Users\Acer\.claude\skills\gpt\gen-image.ps1" -Prompt "..." -Out "E:\path\anh.png" [-Size 1024x1024]
+node "<thư-mục-skill>/gen-image.mjs" --prompt "..." --out "<đường-dẫn>/anh.png" [--size 1024x1024]
 ```
-Sau đó dùng Read để xem ảnh và kiểm tra kết quả.
+`gen-image.ps1` là bản PowerShell cho Windows (tham số `-Prompt -Out -Size`), ưu tiên dùng `.mjs`. Người dùng không nói lưu ở đâu thì lưu vào thư mục làm việc hiện tại. Sau đó dùng Read để xem ảnh và kiểm tra kết quả.
 
 ## Lưu ý đã quan sát
 
